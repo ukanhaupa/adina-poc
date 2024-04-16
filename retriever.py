@@ -8,32 +8,21 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from dotenv import load_dotenv
 import os
-import atexit
+import shutil
 from s3bucket import upload_to_s3
 load_dotenv()
 
 vector_database_name = "Adina_Vector_Database"
 temp_pdf_folder = "temp-pdf-files"
-last_uploaded_files = []
 
-def check_file_exists_in_temp(filename):
-    file_path = os.path.join(temp_pdf_folder, filename)
-    if os.path.isfile(file_path):
-        return True
-    else:
-        return False
-    
 def delete_temp_files():
-    if os.path.exists(temp_pdf_folder):
-        for file in os.listdir(temp_pdf_folder):
-            file_path = os.path.join(temp_pdf_folder, file)
-            os.remove(file_path)
-        os.rmdir(temp_pdf_folder)
-atexit.register(delete_temp_files)
+    for item in os.listdir(temp_pdf_folder):
+        file_path = os.path.join(temp_pdf_folder, item)
+        os.remove(file_path)
 
 def initialize_vector_db():
     embeddings = OpenAIEmbeddings()
-    vector_database = FAISS.from_texts(["Adina Cosmetic Ingredients"], embeddings)
+    vector_database = FAISS.from_texts(["Adina Cosmetics Ingredients"], embeddings)
     vector_database.save_local(f"{vector_database_name}")
 
 def get_vector_db(docs: list[Document]):
@@ -76,6 +65,7 @@ def load_and_split(uploaded_files):
         )
         temp_docs = text_splitter.split_documents(docs)
         docs.extend(temp_docs)
+    delete_temp_files()
     return docs
 
 def get_retriever(uploaded_files):
@@ -101,7 +91,7 @@ def get_response(user_query, chat_history):
 
     template = """
     <rules> 
-    You name is ADINA, who provides helpful information about Adina Cosmetic Ingredients. 
+    You name is ADINA, who provides helpful information about Adina Consmetics Ingredients. 
     </rules>
     Execute the below mandatory considerations when responding to the inquiries:
     --- Tone - Respectful, Patient, and Encouraging:
