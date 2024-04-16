@@ -11,7 +11,7 @@ if "last_uploaded_files" not in st.session_state:
 # Initialize chat history
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = [
-        AIMessage(content="Hello, I am a bot. How can I help you?"),
+        AIMessage(content="Hello, I am a Adina. How can I help you?"),
     ]
 
 # conversation
