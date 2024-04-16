@@ -6,25 +6,6 @@ header = st.container()
 header.title("Adina Cosmetic Ingredients")
 header.write("""<div class='fixed-header'/>""", unsafe_allow_html=True)
 
-### Custom CSS for the sticky header
-st.markdown(
-    """
-<style>
-    div[data-testid="stVerticalBlock"] div:has(div.fixed-header) {
-        position: sticky;
-        top: 2.875rem;
-        background-color: #0E1117;
-        z-index: 999;
-    }
-    .fixed-header {
-        border: 2px solid #262730;
-        border-radius: 5px;
-    }
-</style>
-    """,
-    unsafe_allow_html=True
-)
-
 # Initialize chat history
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = [
