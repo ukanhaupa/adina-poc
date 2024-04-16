@@ -2,6 +2,7 @@ import streamlit as st
 from langchain_core.messages import AIMessage, HumanMessage
 from retriever import get_response, get_retriever, check_file_exists_in_temp
 st.set_page_config(page_title="Adina Cosmetic Ingredients", page_icon="")
+st.title("Adina Cosmetic Ingredients")
 
 # Initialize chat history
 if "chat_history" not in st.session_state:
