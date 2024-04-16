@@ -8,15 +8,32 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from dotenv import load_dotenv
 import os
+import atexit
 from s3bucket import upload_to_s3
 load_dotenv()
 
 vector_database_name = "Adina_Vector_Database"
+temp_pdf_folder = "temp-pdf-files"
 last_uploaded_files = []
+
+def check_file_exists_in_temp(filename):
+    file_path = os.path.join(temp_pdf_folder, filename)
+    if os.path.isfile(file_path):
+        return True
+    else:
+        return False
+    
+def delete_temp_files():
+    if os.path.exists(temp_pdf_folder):
+        for file in os.listdir(temp_pdf_folder):
+            file_path = os.path.join(temp_pdf_folder, file)
+            os.remove(file_path)
+        os.rmdir(temp_pdf_folder)
+atexit.register(delete_temp_files)
 
 def initialize_vector_db():
     embeddings = OpenAIEmbeddings()
-    vector_database = FAISS.from_texts(["Adina Cosmetic Ingredients"], embeddings)
+    vector_database = FAISS.from_texts(["Adina Cosmetics Ingredients"], embeddings)
     vector_database.save_local(f"{vector_database_name}")
 
 def get_vector_db(docs: list[Document]):
@@ -36,14 +53,12 @@ def get_vector_db(docs: list[Document]):
         return FAISS.load_local(f"{vector_database_name}", embeddings, allow_dangerous_deserialization=True)
 
 def load_and_split(uploaded_files):
-    local_folder = "temp-pdf-files"
-
-    if not os.path.exists(local_folder):
-        os.makedirs(local_folder)
+    if not os.path.exists(temp_pdf_folder):
+        os.makedirs(temp_pdf_folder)
 
     docs = []
     for file in uploaded_files:
-        local_filepath = os.path.join(local_folder, file.name)
+        local_filepath = os.path.join(temp_pdf_folder, file.name)
         with open(local_filepath, "wb") as f:
             f.write(file.getvalue())
 
@@ -86,7 +101,7 @@ def get_response(user_query, chat_history):
 
     template = """
     <rules> 
-    You name is ADINA, who provides helpful information about Adina Consmetic Ingredients. 
+    You name is ADINA, who provides helpful information about Adina Consmetics Ingredients. 
     </rules>
     Execute the below mandatory considerations when responding to the inquiries:
     --- Tone - Respectful, Patient, and Encouraging:
