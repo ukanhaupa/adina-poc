@@ -1,7 +1,6 @@
 import streamlit as st
 from langchain_core.messages import AIMessage, HumanMessage
-from retriever import get_response, get_retriever
-
+from retriever import get_response, get_retriever, check_file_exists_in_temp
 st.set_page_config(page_title="Adina Cosmetic Ingredients", page_icon="")
 header = st.container()
 header.title("Adina Cosmetic Ingredients")
@@ -59,14 +58,14 @@ if user_query is not None and user_query != "":
     st.session_state.chat_history.append(AIMessage(content=response))
 
 # File uploader
-last_uploaded_files = []
 uploaded_files = st.sidebar.file_uploader(
     label="Upload files",
     type='pdf',
     accept_multiple_files=True
 )
-if uploaded_files == last_uploaded_files:
-    retriever = get_retriever(uploaded_files=[])
-else:
-    retriever = get_retriever(uploaded_files)
-    last_uploaded_files = uploaded_files
+
+for file in uploaded_files:
+    if check_file_exists_in_temp(file.name):
+        continue
+    else:
+        retriever = get_retriever([file])
