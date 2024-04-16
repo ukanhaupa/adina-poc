@@ -47,6 +47,6 @@ uploaded_files = st.sidebar.file_uploader(
     accept_multiple_files=True
 )
 
-to_be_vectorised_files = [item for item in uploaded_files if item not in st.session_state.last_uploaded_files]
+to_be_vectorised_files = [item for item in uploaded_files if item.name not in st.session_state.last_uploaded_files]
 retriever = get_retriever(to_be_vectorised_files)
-st.session_state.last_uploaded_files.extend(to_be_vectorised_files)
+st.session_state.last_uploaded_files.extend([item.name for item in to_be_vectorised_files])
