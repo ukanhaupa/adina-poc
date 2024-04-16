@@ -22,7 +22,7 @@ def delete_temp_files():
 
 def initialize_vector_db():
     embeddings = OpenAIEmbeddings()
-    vector_database = FAISS.from_texts(["Adina Cosmetics Ingredients"], embeddings)
+    vector_database = FAISS.from_texts(["Adina Cosmetic Ingredients"], embeddings)
     vector_database.save_local(f"{vector_database_name}")
 
 def get_vector_db(docs: list[Document]):
