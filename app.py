@@ -1,8 +1,12 @@
 import streamlit as st
 from langchain_core.messages import AIMessage, HumanMessage
-from retriever import get_response, get_retriever, check_file_exists_in_temp
+from retriever import get_response, get_retriever
 st.set_page_config(page_title="Adina Cosmetic Ingredients", page_icon="")
 st.title("Adina Cosmetic Ingredients")
+
+# last uploaded files
+if "last_uploaded_files" not in st.session_state:
+    st.session_state.last_uploaded_files = []
 
 # Initialize chat history
 if "chat_history" not in st.session_state:
@@ -43,8 +47,6 @@ uploaded_files = st.sidebar.file_uploader(
     accept_multiple_files=True
 )
 
-for file in uploaded_files:
-    if check_file_exists_in_temp(file.name):
-        continue
-    else:
-        retriever = get_retriever([file])
+to_be_vectorised_files = [item for item in uploaded_files if item not in st.session_state.last_uploaded_files]
+retriever = get_retriever(to_be_vectorised_files)
+st.session_state.last_uploaded_files.extend(to_be_vectorised_files)
