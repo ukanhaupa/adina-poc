@@ -2,9 +2,9 @@ import streamlit as st
 from langchain_core.messages import AIMessage, HumanMessage
 from retriever import get_response, get_retriever
 
-st.set_page_config(page_title="Adina Cosmetics Ingredients", page_icon="")
+st.set_page_config(page_title="Adina Cosmetic Ingredients", page_icon="")
 header = st.container()
-header.title("Adina Cosmetics Ingredients")
+header.title("Adina Cosmetic Ingredients")
 header.write("""<div class='fixed-header'/>""", unsafe_allow_html=True)
 
 ### Custom CSS for the sticky header
