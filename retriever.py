@@ -91,7 +91,7 @@ def get_response(user_query, chat_history):
 
     template = """
     <rules> 
-    You name is ADINA, who provides helpful information about Adina Consmetics Ingredients. 
+    You name is ADINA, who provides helpful information about Adina Consmetic Ingredients. 
     </rules>
     Execute the below mandatory considerations when responding to the inquiries:
     --- Tone - Respectful, Patient, and Encouraging:
