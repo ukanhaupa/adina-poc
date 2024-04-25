@@ -57,13 +57,13 @@ def load_and_split(uploaded_files):
             print(f"\nFailed to upload {file.name}.")
 
         loader = PyPDFLoader(local_filepath)
-        docs = loader.load()
+        doc_loader = loader.load()
 
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size = 1000,
             chunk_overlap=200
         )
-        temp_docs = text_splitter.split_documents(docs)
+        temp_docs = text_splitter.split_documents(doc_loader)
         docs.extend(temp_docs)
     delete_temp_files()
     return docs
