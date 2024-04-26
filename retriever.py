@@ -1,45 +1,58 @@
-from langchain_community.document_loaders.pdf import PyPDFLoader
-from langchain_community.vectorstores import FAISS
-from langchain_openai.embeddings.azure import OpenAIEmbeddings
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_openai.chat_models.azure import ChatOpenAI
+import os
+
+from dotenv import load_dotenv
 from langchain.schema import Document
+from langchain_community.vectorstores import FAISS
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from dotenv import load_dotenv
-import os
-import shutil
+from langchain_openai.chat_models.azure import ChatOpenAI
+from langchain_openai.embeddings.azure import OpenAIEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+from doctr_ocr import pdf_extractor
 from s3bucket import upload_to_s3
+
 load_dotenv()
 
 vector_database_name = "Adina_Vector_Database"
 temp_pdf_folder = "temp-pdf-files"
+
 
 def delete_temp_files():
     for item in os.listdir(temp_pdf_folder):
         file_path = os.path.join(temp_pdf_folder, item)
         os.remove(file_path)
 
+
 def initialize_vector_db():
     embeddings = OpenAIEmbeddings()
     vector_database = FAISS.from_texts(["Adina Cosmetic Ingredients"], embeddings)
     vector_database.save_local(f"{vector_database_name}")
 
+
 def get_vector_db(docs: list[Document]):
     embeddings = OpenAIEmbeddings()
-    
+
     try:
         currentVectorDatabase = FAISS.from_documents(docs, embeddings)
-        existingVectorDatabase = FAISS.load_local(f"{vector_database_name}", embeddings, allow_dangerous_deserialization=True)
-        
+        existingVectorDatabase = FAISS.load_local(
+            f"{vector_database_name}", embeddings, allow_dangerous_deserialization=True
+        )
+
         existingVectorDatabase.merge_from(currentVectorDatabase)
         existingVectorDatabase.save_local(f"{vector_database_name}")
 
         return existingVectorDatabase
-    
-    except :
-        print("!Warning : Document is empty or not in the correct format. Thus provided pdf(s) are not added to the vector database.")
-        return FAISS.load_local(f"{vector_database_name}", embeddings, allow_dangerous_deserialization=True)
+
+    except Exception as e:
+        print(
+            "!Warning : Document is empty or not in the correct format. Thus provided pdf(s) are not added to the vector database.",
+            e,
+        )
+        return FAISS.load_local(
+            f"{vector_database_name}", embeddings, allow_dangerous_deserialization=True
+        )
+
 
 def load_and_split(uploaded_files):
     if not os.path.exists(temp_pdf_folder):
@@ -56,17 +69,16 @@ def load_and_split(uploaded_files):
         else:
             print(f"\nFailed to upload {file.name}.")
 
-        loader = PyPDFLoader(local_filepath)
-        doc_loader = loader.load()
+        text = pdf_extractor(local_filepath)
 
         text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size = 1000,
-            chunk_overlap=200
+            chunk_size=1000, chunk_overlap=200
         )
-        temp_docs = text_splitter.split_documents(doc_loader)
+        temp_docs = text_splitter.create_documents(text_splitter.split_text(text))
         docs.extend(temp_docs)
     delete_temp_files()
     return docs
+
 
 def get_retriever(uploaded_files):
     if os.path.exists(f"{vector_database_name}") == False:
@@ -74,16 +86,19 @@ def get_retriever(uploaded_files):
 
     if len(uploaded_files) == 0:
         embeddings = OpenAIEmbeddings()
-        vectorDatabase = FAISS.load_local(f"{vector_database_name}", embeddings, allow_dangerous_deserialization=True)
+        vectorDatabase = FAISS.load_local(
+            f"{vector_database_name}", embeddings, allow_dangerous_deserialization=True
+        )
 
         retriever = vectorDatabase.as_retriever()
         return retriever
-    
+
     docs = load_and_split(uploaded_files)
     vector_database = get_vector_db(docs=docs)
-    
+
     retriever = vector_database.as_retriever()
     return retriever
+
 
 def get_response(user_query, chat_history):
     retriever = get_retriever(uploaded_files=[])
@@ -115,16 +130,14 @@ def get_response(user_query, chat_history):
     """
 
     prompt = ChatPromptTemplate.from_template(template)
-    llm = ChatOpenAI(
-        model='gpt-3.5-turbo-0125',
-        streaming=True
-    )
-        
-    chain = prompt | llm | StrOutputParser()
-    
-    return chain.stream({
-        "chat_history": chat_history,
-        "retrieved_info": docs,
-        "user_question": user_query,
-    })
+    llm = ChatOpenAI(model="gpt-3.5-turbo-0125", streaming=True)
 
+    chain = prompt | llm | StrOutputParser()
+
+    return chain.stream(
+        {
+            "chat_history": chat_history,
+            "retrieved_info": docs,
+            "user_question": user_query,
+        }
+    )
